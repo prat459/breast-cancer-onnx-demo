@@ -79,23 +79,20 @@
         return (x - means[i]) / s;
       });
 
-      try {
+try {
   const session = await ort.InferenceSession.create("models/breast_cancer_deep_mlp.onnx");
   const tensor = new ort.Tensor("float32", Float32Array.from(scaledInput), [1, 30]);
   const results = await session.run({ input: tensor });
 
-  console.log("Model outputs:", Object.keys(results)); // 👈 see output name
+  console.log("Model outputs:", Object.keys(results));
 
-  let prob;
-  if (results.prob) {
-    prob = results.prob.data[0];
-  } else if (results.output) {
-    const raw = results.output.data[0];
-    prob = 1 / (1 + Math.exp(-raw)); // apply sigmoid
-  } else {
-    const key = Object.keys(results)[0];
-    const raw = results[key].data[0];
-    prob = 1 / (1 + Math.exp(-raw));
+  // Get first output dynamically
+  const key = results.prob ? "prob" : Object.keys(results)[0];
+  let prob = results[key].data[0];
+
+  // ✅ Apply sigmoid only if necessary
+  if (prob < 0 || prob > 1) {
+    prob = 1 / (1 + Math.exp(-prob));
   }
 
   const pred = prob > 0.5 ? "Malignant (1)" : "Benign (0)";
@@ -107,8 +104,10 @@
   console.error("ONNX Error:", err);
   output.textContent = "⚠️ Error loading or running ONNX model.";
 }
+
     });
   </script>
 </body>
 </html>
+
 
