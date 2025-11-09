@@ -74,25 +74,46 @@
       }
 
       // === Apply scaling ===
-      const scaledInput = inputArray.map((x, i) => (x - means[i]) / stds[i]);
+      const scaledInput = inputArray.map((x, i) => { const s = stds[i] === 0 ? 1 : stds[i];
+                      return (x - means[i]) / s;
+            });
+
 
       try {
-        const session = await ort.InferenceSession.create("models/breast_cancer_deep_mlp.onnx");
-        const tensor = new ort.Tensor("float32", Float32Array.from(scaledInput), [1, 30]);
-        const results = await session.run({ input: tensor });
+  // ✅ Fix 1: use correct path — adjust if model is not in /models/
+  const session = await ort.InferenceSession.create("breast_cancer_deep_mlp.onnx");
 
-        const prob = results.prob ? results.prob.data[0] : results.output.data[0];
-        const pred = prob > 0.5 ? "Malignant (1)" : "Benign (0)";
+  // ✅ Fix 2: stable scaling (avoid division by zero)
+  const scaledInput = inputArray.map((x, i) => {
+    const s = stds[i] === 0 ? 1 : stds[i];
+    return (x - means[i]) / s;
+  });
 
-        output.innerHTML = `
-          <strong>Predicted Class:</strong> ${pred}<br>
-          <strong>Probability of Malignant:</strong> ${(prob * 100).toFixed(2)}%
-        `;
-      } catch (err) {
-        console.error("ONNX Error:", err);
-        output.textContent = "⚠️ Error loading or running ONNX model.";
-      }
+  // ✅ Fix 3: ensure shape [1, 30]
+  const tensor = new ort.Tensor("float32", Float32Array.from(scaledInput), [1, 30]);
+
+  // ✅ Fix 4: correct key names from ONNX
+  const results = await session.run({ input: tensor });
+  const probTensor = results.prob;
+  const prob = Array.isArray(probTensor.data)
+    ? probTensor.data[0]
+    : probTensor;
+
+  // ✅ Fix 5: probability check
+  const probPercent = Math.min(Math.max(prob * 100, 0), 100);
+  const pred = prob > 0.5 ? "Malignant (1)" : "Benign (0)";
+
+  output.innerHTML = `
+    <strong>Predicted Class:</strong> ${pred}<br>
+    <strong>Probability of Malignant:</strong> ${probPercent.toFixed(2)}%
+  `;
+} catch (err) {
+  console.error("ONNX Error:", err);
+  output.textContent = "⚠️ Error loading or running ONNX model.";
+}
+
     });
   </script>
 </body>
 </html>
+
