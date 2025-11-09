@@ -72,7 +72,7 @@
 
       try {
         // Load ONNX model
-        const session = await ort.InferenceSession.create("breast_cancer_deep_mlp.onnx");
+        const session = await ort.InferenceSession.create("models/breast_cancer_deep_mlp.onnx");
         const tensor = new ort.Tensor("float32", Float32Array.from(inputArray), [1, inputArray.length]);
 
         // Run inference
@@ -92,3 +92,4 @@
   </script>
 </body>
 </html>
+
