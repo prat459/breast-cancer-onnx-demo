@@ -81,7 +81,7 @@
 
       try {
   // ✅ Fix 1: use correct path — adjust if model is not in /models/
-  const session = await ort.InferenceSession.create("breast_cancer_deep_mlp.onnx");
+  const session = await ort.InferenceSession.create("models/breast_cancer_deep_mlp.onnx");
 
   // ✅ Fix 2: stable scaling (avoid division by zero)
   const scaledInput = inputArray.map((x, i) => {
@@ -116,4 +116,5 @@
   </script>
 </body>
 </html>
+
 
