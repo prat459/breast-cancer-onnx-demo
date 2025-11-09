@@ -92,10 +92,13 @@ try {
 
   // ✅ Apply sigmoid only if necessary
   if (prob < 0 || prob > 1) {
-    prob = 1 / (1 + Math.exp(-prob));
-  }
+  prob = 1 / (1 + Math.exp(-prob));
+}
 
-  const pred = prob > 0.5 ? "Malignant (1)" : "Benign (0)";
+// ⚠️ Invert probability if model learned reversed label order
+prob = 1 - prob;
+
+const pred = prob > 0.5 ? "Malignant (1)" : "Benign (0)";
   output.innerHTML = `
     <strong>Predicted Class:</strong> ${pred}<br>
     <strong>Probability of Malignant:</strong> ${(prob * 100).toFixed(2)}%
@@ -109,5 +112,6 @@ try {
   </script>
 </body>
 </html>
+
 
 
